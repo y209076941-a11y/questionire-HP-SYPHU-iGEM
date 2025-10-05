@@ -8,6 +8,7 @@ import json
 import base64
 import time
 
+
 # 页面配置
 st.set_page_config(
     page_title="SYPHU-CHINA iGEM - Inclusive Clinical Research",
@@ -251,6 +252,9 @@ st.markdown("""
         --inclusion-teal: #17becf;
         --diversity-pink: #e377c2;
     }
+    .main .block-container {
+        text-align: center;
+    }
 
     .inclusive-header {
         background: linear-gradient(135deg, var(--primary-blue), var(--inclusion-teal), var(--primary-green));
@@ -316,6 +320,7 @@ st.markdown("""
         margin: 1rem 0;
         border-left: 6px solid var(--accessibility-yellow);
         box-shadow: 0 8px 25px rgba(44, 160, 44, 0.2);
+        text-align: center;
     }
 
     .inclusive-card {
@@ -329,6 +334,7 @@ st.markdown("""
         background-clip: padding-box;
         position: relative;
         transition: all 0.3s ease;
+        text-align: center;
     }
 
     .inclusive-card::before {
@@ -351,7 +357,9 @@ st.markdown("""
         transform: translateY(-5px);
         box-shadow: 0 20px 40px rgba(0,0,0,0.15);
     }
-
+    h1, h2, h3, h4, h5, h6, p {
+        text-align: center;
+    }
     .stProgress > div > div > div > div {
         background: linear-gradient(90deg, var(--primary-blue), var(--inclusion-teal), var(--primary-green));
         background-size: 200% 100%;
@@ -367,6 +375,8 @@ st.markdown("""
         font-weight: 600;
         transition: all 0.3s ease;
         box-shadow: 0 5px 15px rgba(31, 119, 180, 0.4);
+        margin: 0 auto;
+        display: block;
     }
 
     .stButton > button:hover {
@@ -416,8 +426,8 @@ st.markdown(f"""
 
 # 数据使用承诺横幅
 st.markdown(f"""
-<div class="promise-banner">
-    <h3 style="margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;">
+<div class="promise-banner" style="text-align: center;">
+    <h3 style="margin: 0 0 1rem 0; display: inline-flex; align-items: center; gap: 0.5rem; justify-content: center;">
         <span>🤝</span> {texts['data_promise_title']}
     </h3>
     <p style="margin: 0; font-size: 1rem; line-height: 1.6;">{texts['data_promise']}</p>
@@ -434,8 +444,9 @@ with tab1:
 
     progress_percent = (st.session_state.current_step / (len(steps) - 1)) * 100 if len(steps) > 1 else 0
 
+    # 使用st.components.html来渲染HTML内容
     progress_html = f"""
-    <div style="background: rgba(248, 249, 250, 0.8); padding: 2rem; border-radius: 15px; margin-bottom: 2rem; backdrop-filter: blur(10px);">
+    <div style="margin-bottom: 2rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
             <span style="color: #1f77b4; font-weight: 600; font-size: 1.1rem;">{texts['progress']}</span>
             <span style="background: #1f77b4; color: white; padding: 0.3rem 1rem; border-radius: 20px; font-size: 0.9rem;">
@@ -454,7 +465,8 @@ with tab1:
         </div>
     </div>
     """
-    st.markdown(progress_html, unsafe_allow_html=True)
+    # 确保HTML正确渲染而不是显示为纯文本
+    st.components.v1.html(progress_html, height=150)
 
     # 步骤1: 知情同意
     if st.session_state.current_step == 0:
@@ -466,57 +478,82 @@ with tab1:
         """, unsafe_allow_html=True)
 
         with st.form("informed_consent"):
-            st.markdown("### 📋 Research Participation Agreement")
+            st.markdown("<h3 style='text-align:center'>📋 Research Participation Agreement</h3>", unsafe_allow_html=True)
 
             col1, col2 = st.columns(2)
 
             with col1:
                 st.markdown("""
-                #### Research Purpose
-                - Advance scientific research in liver cancer treatment
-                - Provide real-world data for iGEM competition
-                - Promote global innovation in healthcare
+                <div style='text-align:center'>
+                <h4>Research Purpose</h4>
+                <ul>
+                    <li>Advance scientific research in liver cancer treatment</li>
+                    <li>Provide real-world data for iGEM competition</li>
+                    <li>Promote global innovation in healthcare</li>
+                </ul>
 
-                #### Your Rights
-                - Right to withdraw from the study at any time
-                - Right to access your personal data
-                - Right to ask questions and raise concerns
-                """)
+                <h4>Your Rights</h4>
+                <ul>
+                    <li>Right to withdraw from the study at any time</li>
+                    <li>Right to access your personal data</li>
+                    <li>Right to ask questions and raise concerns</li>
+                </ul>
+                </div>
+                """, unsafe_allow_html=True)
 
             with col2:
                 st.markdown("""
-                #### Data Protection
-                - All data will be anonymized
-                - Data used only for scientific research
-                - Strict data security measures
+                <div style='text-align:center'>
+                <h4>Data Protection</h4>
+                <ul>
+                    <li>All data will be anonymized</li>
+                    <li>Data used only for scientific research</li>
+                    <li>Strict data security measures</li>
+                </ul>
 
-                #### Benefits & Risks
-                - Contribute to medical advancement
-                - May not receive direct medical benefits
-                - Privacy risks minimized
-                """)
+                <h4>Benefits & Risks</h4>
+                <ul>
+                    <li>Contribute to medical advancement</li>
+                    <li>May not receive direct medical benefits</li>
+                    <li>Privacy risks minimized</li>
+                </ul>
+                </div>
+                """, unsafe_allow_html=True)
 
             # 包容性承诺
             st.markdown("---")
-            st.markdown("### 🌈 Our Inclusive Commitment")
+            st.markdown("<h3 style='text-align:center'>🌈 Our Inclusive Commitment</h3>", unsafe_allow_html=True)
             st.markdown(texts['diversity_statement'])
 
             # 同意选项
             st.markdown("---")
             col1, col2, col3 = st.columns([1, 2, 1])
             with col2:
-                consent_1 = st.checkbox("**I understand the research purpose and process**", value=False)
-                consent_2 = st.checkbox("**I agree to participate in this research**", value=False)
-                consent_3 = st.checkbox("**I understand the data usage promise**", value=False)
-                consent_4 = st.checkbox("**I confirm I am 18 years or older**", value=False)
+                c1, c2, c3 = st.columns([1, 2, 1])
+                with c2:
+                    consent_1 = st.checkbox("**I understand the research purpose and process**", value=False)
+                c1, c2, c3 = st.columns([1, 2, 1])
+                with c2:
+                    consent_2 = st.checkbox("**I agree to participate in this research**", value=False)
+                c1, c2, c3 = st.columns([1, 2, 1])
+                with c2:
+                    consent_3 = st.checkbox("**I understand the data usage promise**", value=False)
+                c1, c2, c3 = st.columns([1, 2, 1])
+                with c2:
+                    consent_4 = st.checkbox("**I confirm I am 18 years or older**", value=False)
+            
+            st.markdown("<br>", unsafe_allow_html=True)
 
-            if st.form_submit_button(f"**{texts['start_questionnaire']}**"):
-                if all([consent_1, consent_2, consent_3, consent_4]):
-                    st.session_state.consent_given = True
-                    st.session_state.current_step = 1
-                    st.rerun()
-                else:
-                    st.error(texts['consent_required'])
+            col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
+            with col3:
+                if st.form_submit_button(f"**{texts['start_questionnaire']}**"):
+                    if all([consent_1, consent_2, consent_3, consent_4]):
+                        st.session_state.consent_given = True
+                        st.session_state.current_step = 1
+                        st.rerun()
+                    else:
+                        st.error(texts['consent_required'])
+            
 
     # 步骤2: 扩展的基本信息
     elif st.session_state.current_step == 1:
@@ -895,17 +932,20 @@ with tab3:
 
 # 页脚
 st.markdown("---")
-footer_col1, footer_col2 = st.columns([3, 1])
+footer_col1, footer_col2, footer_col3 = st.columns([1, 1, 1])
 
-with footer_col1:
+with footer_col2:
     st.markdown(f"""
-    <div style="text-align: center; color: #666; padding: 2rem;">
-        <h4 style="color: #1f77b4;">{texts['team']}</h4>
-        <p><strong>Inclusive Research Commitment:</strong> We are committed to enabling everyone to participate in scientific research, regardless of age, gender, ethnicity, ability, or background.</p>
-        <div class="badge-container" style="margin: 1rem 0;">
-            <div class="diversity-badge" style="background: linear-gradient(135deg, #ff6b6b, #ee5a24);">🔬 Scientific Research</div>
-            <div class="diversity-badge" style="background: linear-gradient(135deg, #4ecdc4, #00b894);">🤝 Ethical Compliance</div>
-            <div class="diversity-badge" style="background: linear-gradient(135deg, #45b7d1, #0984e3);">🌍 Global Collaboration</div>
+    <div style="width: 100%; display: flex; justify-content: center;">
+        <div style="max-width: 800px; text-align: center; color: #666; padding: 2rem;">
+            <h4 style="color: #1f77b4; margin-bottom: 1rem;">{texts['team']}</h4>
+            <p style="margin: 0 auto 1.5rem auto; max-width: 600px;"><strong>Inclusive Research Commitment:</strong> We are committed to enabling everyone to participate in scientific research, regardless of age, gender, ethnicity, ability, or background.</p>
+            <div style="display: inline-block;">
+                <div style="background: linear-gradient(135deg, #ff6b6b, #ee5a24); padding: 0.5rem 1rem; margin: 0.3rem; border-radius: 8px; display: inline-block;">🔬 Scientific Research</div>
+                <div style="background: linear-gradient(135deg, #4ecdc4, #00b894); padding: 0.5rem 1rem; margin: 0.3rem; border-radius: 8px; display: inline-block;">🤝 Ethical Compliance</div>
+                <div style="background: linear-gradient(135deg, #45b7d1, #0984e3); padding: 0.5rem 1rem; margin: 0.3rem; border-radius: 8px; display: inline-block;">🌍 Global Collaboration</div>
+            </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
+
