@@ -3,123 +3,271 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import base64
+import time
+
 
 # 页面配置
 st.set_page_config(
-    page_title="ATRA-AIVC Engineering Platform-2025-SYPHU-CHINA-iGEM",
-    page_icon="🔬",
+    page_title="SYPHU-CHINA iGEM - Inclusive Clinical Research",
+    page_icon="🌍",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# 修复后的配色方案 - 更灵动有趣
+# 扩展的多语言支持
+LANGUAGES = {
+    "en": "English",
+    "zh": "中文"
+}
+
+TEXTS = {
+    "en": {
+        # Header and General
+        "title": "🌍 SYPHU-CHINA iGEM Inclusive Research Platform",
+        "subtitle": "Diverse Participant Engagement for Global Health Innovation",
+        "global_participation": "Global Participation",
+        "accessibility_design": "Accessibility Designed",
+        "diversity_inclusion": "Diversity & Inclusion",
+        "data_protection": "Data Protection",
+        "scientific_research": "Scientific Research",
+        "team": "SYPHU-CHINA iGEM Team 2025",
+        "data_promise_title": "🔒 Our Data Usage Promise",
+        "data_promise": "We sincerely promise that all data collected through this platform will be used exclusively for the iGEM synthetic biology competition and related scientific research purposes.",
+        "inclusive_research": "Inclusive Research Commitment",
+        "diversity_statement": "We believe that medical research should represent all people.",
+
+        # Navigation
+        "progress": "Progress",
+        "complete": "Complete",
+        "next": "Next →",
+        "previous": "← Previous",
+        "submit": "Submit",
+        "save": "Save Progress",
+        "required": "Required *",
+
+        # Steps
+        "basic_info": "Basic Information",
+        "medical_history": "Medical History",
+        "symptoms": "Symptoms Assessment",
+        "treatment": "Treatment Information",
+        "research": "Research Participation",
+        "completion": "Completion",
+        "dashboard": "Live Dashboard",
+        "analytics": "Data Analytics",
+        "export": "Export Data",
+        "consent": "Informed Consent",
+        "demographics": "Demographic Details",
+        "accessibility": "Accessibility Needs",
+
+        # Form Labels - Basic Info
+        "questionnaire_id": "Questionnaire ID",
+        "survey_date": "Survey Date",
+        "survey_method": "Survey Method",
+        "gender": "Gender Identity",
+        "birth_date": "Date of Birth",
+        "height": "Height (cm)",
+        "weight": "Weight (kg)",
+        "education_level": "Highest Education",
+        "occupation": "Employment Status",
+        "income_level": "Annual Household Income",
+        "ethnicity": "Ethnicity",
+        "residence_type": "Residence Type",
+        "region": "Region",
+
+        # Options - Basic Info
+        "survey_methods": ["Clinic Paper", "Ward Paper", "WeChat QR", "Phone", "Video Conference", "Other"],
+        "genders": ["Male", "Female", "Non-binary", "Transgender", "Prefer not to say", "Other"],
+        "education_levels": ["Primary School", "Middle School", "High School", "College", "Bachelor", "Master", "PhD",
+                             "Other"],
+        "occupations": ["Employed", "Retired", "Student", "Unemployed", "Homemaker", "Disabled", "Other"],
+        "income_levels": ["Under 50k", "50k-100k", "100k-200k", "200k-500k", "500k-1M", "Over 1M", "Prefer not to say"],
+        "ethnicities": ["Han", "Mongolian", "Hui", "Tibetan", "Uyghur", "Miao", "Other Minority"],
+        "residence_types": ["Urban", "Town", "Rural", "Pastoral", "Other"],
+        "regions": ["East China", "South China", "North China", "Central China", "Southwest", "Northwest", "Northeast",
+                    "Hong Kong/Macao/Taiwan", "Overseas"],
+
+        # Accessibility
+        "accessibility_needs": "Accessibility Support Needs",
+        "communication_preference": "Preferred Communication Methods",
+        "accessibility_options": ["Visual Assistance", "Hearing Assistance", "Mobility Assistance", "Cognitive Support",
+                                  "Language Translation", "Other", "No Needs"],
+        "communication_options": ["Text", "Voice", "Video", "Face-to-face", "Email", "Phone", "Other"],
+
+        # Medical History
+        "diagnosis_date": "Diagnosis Date",
+        "tumor_stage": "Tumor Stage",
+        "diagnosis_location": "Diagnosis Hospital Type",
+        "hepatitis_b": "Hepatitis B Infection",
+        "hepatitis_c": "Hepatitis C Infection",
+        "other_liver_disease": "Other Liver Diseases",
+        "treatment_experience": "Previous Treatment Experience",
+        "current_treatment": "Currently Receiving Treatment",
+
+        # Medical Options
+        "tumor_stages": ["Stage I", "Stage II", "Stage III", "Stage IV", "Unknown", "Initial Diagnosis"],
+        "hospital_types": ["Tertiary Hospital", "Cancer Specialist Hospital", "City-level Hospital", "County Hospital",
+                           "Private Hospital", "Overseas Hospital"],
+        "yes_no_unknown": ["Yes", "No", "Unknown"],
+        "liver_diseases": ["Fatty Liver", "Cirrhosis", "Autoimmune Liver Disease", "Alcoholic Liver Disease", "None",
+                           "Other"],
+        "treatments": ["Surgery", "Liver Transplant", "TACE", "Ablation Therapy", "Targeted Therapy", "Immunotherapy",
+                       "Chemotherapy", "Radiotherapy", "Traditional Medicine", "Supportive Care", "No Treatment"],
+
+        # Buttons and Messages
+        "start_questionnaire": "Start Questionnaire →",
+        "continue": "Continue",
+        "thank_you": "Thank you for completing the questionnaire!",
+        "consent_required": "Please agree to all terms to continue",
+        "all_consent_required": "Please agree to all terms to submit the questionnaire"
+    },
+    "zh": {
+        # Header and General
+        "title": "🌍 SYPHU-CHINA iGEM 包容性研究平台",
+        "subtitle": "多元化参与者参与，推动全球健康创新",
+        "global_participation": "全球参与",
+        "accessibility_design": "无障碍设计",
+        "diversity_inclusion": "多元包容",
+        "data_protection": "数据保护",
+        "scientific_research": "科学研究",
+        "team": "SYPHU-CHINA iGEM 团队 2025",
+        "data_promise_title": "🔒 我们的数据使用承诺",
+        "data_promise": "我们真诚承诺，通过本平台收集的所有数据将仅用于iGEM合成生物学竞赛及相关科学研究目的。",
+        "inclusive_research": "包容性研究承诺",
+        "diversity_statement": "我们相信医学研究应该代表所有人。",
+
+        # Navigation
+        "progress": "进度",
+        "complete": "完成",
+        "next": "下一步 →",
+        "previous": "← 上一步",
+        "submit": "提交",
+        "save": "保存进度",
+        "required": "必填 *",
+
+        # Steps
+        "basic_info": "基本信息",
+        "medical_history": "疾病历史",
+        "symptoms": "症状评估",
+        "treatment": "治疗信息",
+        "research": "研究参与",
+        "completion": "完成问卷",
+        "dashboard": "实时仪表盘",
+        "analytics": "数据分析",
+        "export": "导出数据",
+        "consent": "知情同意",
+        "demographics": "人口统计详情",
+        "accessibility": "无障碍需求",
+
+        # Form Labels - Basic Info
+        "questionnaire_id": "问卷编号",
+        "survey_date": "调查日期",
+        "survey_method": "调查方式",
+        "gender": "性别认同",
+        "birth_date": "出生日期",
+        "height": "身高 (cm)",
+        "weight": "体重 (kg)",
+        "education_level": "最高教育程度",
+        "occupation": "职业状况",
+        "income_level": "家庭年收入",
+        "ethnicity": "民族",
+        "residence_type": "居住类型",
+        "region": "常住地区",
+
+        # Options - Basic Info
+        "survey_methods": ["门诊纸质", "病房纸质", "微信二维码", "电话", "视频会议", "其他"],
+        "genders": ["男性", "女性", "非二元性别", "跨性别", "不愿透露", "其他"],
+        "education_levels": ["小学", "初中", "高中", "大专", "本科", "硕士", "博士", "其他"],
+        "occupations": ["在职", "退休", "学生", "失业", "家庭主妇/主夫", "残疾", "其他"],
+        "income_levels": ["5万以下", "5-10万", "10-20万", "20-50万", "50-100万", "100万以上", "不愿透露"],
+        "ethnicities": ["汉族", "蒙古族", "回族", "藏族", "维吾尔族", "苗族", "其他少数民族"],
+        "residence_types": ["城市", "乡镇", "农村", "牧区", "其他"],
+        "regions": ["华东", "华南", "华北", "华中", "西南", "西北", "东北", "港澳台", "海外"],
+
+        # Accessibility
+        "accessibility_needs": "无障碍支持需求",
+        "communication_preference": "偏好的沟通方式",
+        "accessibility_options": ["视觉辅助", "听觉辅助", "移动辅助", "认知支持", "语言翻译", "其他", "无需求"],
+        "communication_options": ["文字", "语音", "视频", "面对面", "电子邮件", "电话", "其他"],
+
+        # Medical History
+        "diagnosis_date": "确诊日期",
+        "tumor_stage": "肿瘤分期",
+        "diagnosis_location": "确诊医院类型",
+        "hepatitis_b": "乙肝感染",
+        "hepatitis_c": "丙肝感染",
+        "other_liver_disease": "其他肝脏疾病",
+        "treatment_experience": "既往治疗经历",
+        "current_treatment": "是否正在接受治疗",
+
+        # Medical Options
+        "tumor_stages": ["I期", "II期", "III期", "IV期", "不确定", "初次诊断"],
+        "hospital_types": ["三甲医院", "肿瘤专科医院", "地市级医院", "县级医院", "私立医院", "海外医院"],
+        "yes_no_unknown": ["是", "否", "不确定"],
+        "liver_diseases": ["脂肪肝", "肝硬化", "自身免疫性肝病", "酒精性肝病", "无", "其他"],
+        "treatments": ["手术切除", "肝移植", "TACE", "消融治疗", "靶向治疗", "免疫治疗", "化疗", "放疗", "中医治疗",
+                       "支持治疗", "未治疗"],
+
+        # Buttons and Messages
+        "start_questionnaire": "开始问卷 →",
+        "continue": "继续",
+        "thank_you": "感谢您完成问卷！",
+        "consent_required": "请同意所有条款以继续",
+        "all_consent_required": "请确认所有条款以提交问卷"
+    }
+}
+
+# 初始化session state
+if 'language' not in st.session_state:
+    st.session_state.language = "zh"
+if 'current_step' not in st.session_state:
+    st.session_state.current_step = 0
+if 'form_data' not in st.session_state:
+    st.session_state.form_data = {}
+if 'consent_given' not in st.session_state:
+    st.session_state.consent_given = False
+if 'participants_data' not in st.session_state:
+    # 模拟数据用于演示
+    st.session_state.participants_data = pd.DataFrame({
+        'id': range(1, 101),
+        'region': np.random.choice(TEXTS['zh']['regions'], 100),
+        'gender': np.random.choice(TEXTS['zh']['genders'], 100),
+        'age': np.random.randint(18, 80, 100),
+        'tumor_stage': np.random.choice(TEXTS['zh']['tumor_stages'], 100),
+        'completion_date': [datetime.now() - timedelta(days=x) for x in np.random.randint(1, 30, 100).tolist()]    })
+
+# 动态CSS样式
 st.markdown("""
 <style>
-    /* 灵动配色系统 */
+    /* 包容性设计配色 */
     :root {
-        --emerald: #255A3B;
-        --mint: #81B095;
-        --seafoam: #DDEADF;
-        --sky: #D2E2EF;
-        --coral: #DC917B;
-        --terracotta: #8F533F;
-        --lavender: #A78BFA;
-        --sunflower: #F59E0B;
-        --berry: #DB2777;
+        --primary-blue: #1f77b4;
+        --primary-green: #2ca02c;
+        --primary-orange: #ff7f0e;
+        --primary-red: #d62728;
+        --primary-purple: #9467bd;
+        --accessibility-yellow: #ffd700;
+        --inclusion-teal: #17becf;
+        --diversity-pink: #e377c2;
+    }
+    .main .block-container {
+        text-align: center;
     }
 
-    .nature-header {
-        background: linear-gradient(135deg, var(--emerald) 0%, #1a3b2a 100%);
+    .inclusive-header {
+        background: linear-gradient(135deg, var(--primary-blue), var(--inclusion-teal), var(--primary-green));
+        background-size: 400% 400%;
+        animation: gradientShift 15s ease infinite;
         padding: 3rem 2rem;
-        border-radius: 16px;
+        border-radius: 20px;
         color: white;
         text-align: center;
-        margin-bottom: 2.5rem;
-        box-shadow: 0 12px 40px rgba(37, 90, 59, 0.2);
-        border: 1px solid rgba(255,255,255,0.15);
+        margin-bottom: 2rem;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
         position: relative;
         overflow: hidden;
-    }
-
-    .nature-header::before {
-        content: "";
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-        animation: float 6s ease-in-out infinite;
-    }
-
-    @keyframes float {
-        0%, 100% { transform: translateY(0px) rotate(0deg); }
-        50% { transform: translateY(-10px) rotate(180deg); }
-    }
-
-    .section-nature {
-        background: linear-gradient(135deg, #ffffff 0%, var(--seafoam) 100%);
-        padding: 2.5rem;
-        border-radius: 16px;
-        margin: 2rem 0;
-        border-left: 6px solid var(--emerald);
-        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-        border-top: 1px solid rgba(210, 226, 239, 0.8);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .section-nature:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 40px rgba(37, 90, 59, 0.15);
-    }
-
-    .technical-card {
-        background: linear-gradient(135deg, #ffffff 0%, var(--sky) 100%);
-        padding: 2.5rem;
-        border-radius: 16px;
-        box-shadow: 0 8px 32px rgba(37, 90, 59, 0.12);
-        margin: 2rem 0;
-        border: 1px solid rgba(210, 226, 239, 0.8);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .technical-card::after {
-        content: "🧬";
-        position: absolute;
-        top: -20px;
-        right: -20px;
-        font-size: 8rem;
-        opacity: 0.1;
-        transform: rotate(15deg);
-    }
-
-    .hp-card {
-        background: linear-gradient(135deg, #ffffff 0%, var(--seafoam) 100%);
-        padding: 2.5rem;
-        border-radius: 16px;
-        box-shadow: 0 8px 32px rgba(37, 90, 59, 0.12);
-        margin: 2rem 0;
-        border: 1px solid rgba(221, 234, 223, 0.8);
-        position: relative;
-    }
-
-    .interactive-card {
-        background: linear-gradient(135deg, #ffffff 0%, #FEF3C7 100%);
-        padding: 2rem;
-        border-radius: 16px;
-        box-shadow: 0 8px 32px rgba(245, 158, 11, 0.15);
-        margin: 2rem 0;
-        border: 1px solid rgba(245, 158, 11, 0.3);
-    }
-
-    .stProgress > div > div > div > div {
-        background: linear-gradient(90deg, var(--emerald), var(--mint), var(--lavender));
-        background-size: 200% 100%;
-        animation: gradientShift 3s ease infinite;
     }
 
     @keyframes gradientShift {
@@ -128,597 +276,676 @@ st.markdown("""
         100% { background-position: 0% 50%; }
     }
 
-    /* 按钮样式 */
+    /* 修复徽章样式 */
+    .diversity-badge {
+        background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57);
+        background-size: 400% 400%;
+        animation: gradientShift 8s ease infinite;
+        color: white;
+        padding: 0.8rem 1.5rem;
+        border-radius: 25px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        margin: 0.3rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        border: 2px solid rgba(255,255,255,0.3);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+        min-width: 120px;
+        justify-content: center;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+
+    .diversity-badge:hover {
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+
+    .badge-container {
+        display: flex;
+        justify-content: center;
+        gap: 0.8rem;
+        margin-top: 1.5rem;
+        flex-wrap: wrap;
+        padding: 1rem;
+    }
+
+    .promise-banner {
+        background: linear-gradient(135deg, var(--primary-green), var(--inclusion-teal));
+        color: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin: 1rem 0;
+        border-left: 6px solid var(--accessibility-yellow);
+        box-shadow: 0 8px 25px rgba(44, 160, 44, 0.2);
+        text-align: center;
+    }
+
+    .inclusive-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 2.5rem;
+        border-radius: 20px;
+        margin: 1.5rem 0;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        border: 2px solid transparent;
+        background-clip: padding-box;
+        position: relative;
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+
+    .inclusive-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: 20px;
+        padding: 2px;
+        background: linear-gradient(135deg, var(--primary-blue), var(--primary-green), var(--primary-orange));
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        z-index: -1;
+    }
+
+    .inclusive-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+    h1, h2, h3, h4, h5, h6, p {
+        text-align: center;
+    }
+    .stProgress > div > div > div > div {
+        background: linear-gradient(90deg, var(--primary-blue), var(--inclusion-teal), var(--primary-green));
+        background-size: 200% 100%;
+        animation: gradientShift 3s ease infinite;
+    }
+
     .stButton > button {
-        background: linear-gradient(135deg, var(--emerald), var(--mint));
+        background: linear-gradient(135deg, var(--primary-blue), var(--primary-green));
         color: white;
         border: none;
         padding: 0.75rem 2rem;
         border-radius: 50px;
         font-weight: 600;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(37, 90, 59, 0.3);
+        box-shadow: 0 5px 15px rgba(31, 119, 180, 0.4);
+        margin: 0 auto;
+        display: block;
     }
 
     .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(37, 90, 59, 0.4);
-        background: linear-gradient(135deg, var(--mint), var(--emerald));
-    }
-
-    /* 科学图表容器 */
-    .chart-container {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 12px;
-        border: 2px solid var(--sky);
-        margin: 1rem 0;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    }
-
-    /* 标签页样式 */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 2rem;
-    }
-
-    .stTabs [data-baseweb="tab"] {
-        height: 50px;
-        white-space: pre-wrap;
-        background: linear-gradient(135deg, var(--seafoam), var(--sky));
-        border-radius: 10px 10px 0 0;
-        gap: 1rem;
-        padding: 1rem 2rem;
-        font-weight: 600;
-    }
-
-    .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, var(--emerald), var(--mint)) !important;
-        color: white !important;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(31, 119, 180, 0.6);
     }
 </style>
 """, unsafe_allow_html=True)
 
-# 修复后的Header
-st.markdown("""
-<div class="nature-header">
-    <h1 style="font-size: 3rem; margin-bottom: 0.5rem; background: linear-gradient(135deg, #ffffff, #D2E2EF); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">🔬 Cell Systems</h1>
-    <h2 style="font-size: 2rem; font-weight: 400; margin-bottom: 1rem; opacity: 0.95;">AIVC-Engineered Bacteria for Targeted ATRA Delivery</h2>
-    <p style="font-size: 1.2rem; opacity: 0.9;">Integrating Virtual Cell Simulation with Precision Oncology</p>
-    <div style="margin-top: 1.5rem;">
-        <span style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 25px; margin: 0 0.5rem;">🧫 Synthetic Biology</span>
-        <span style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 25px; margin: 0 0.5rem;">🤖 AIVC Simulation</span>
-        <span style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 25px; margin: 0 0.5rem;">🎯 Targeted Therapy</span>
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-# 侧边栏 - 修复并优化
-with st.sidebar:
-    st.markdown("""
-    <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #255A3B, #1a3b2a); 
-                border-radius: 16px; color: white; margin-bottom: 2rem; border: 1px solid rgba(255,255,255,0.1);">
-        <h3 style="margin-bottom: 0.5rem;">🔍 Research Portal</h3>
-        <p style="opacity: 0.9; margin-bottom: 1rem;">Interactive Assessment Platform</p>
-        <div style="font-size: 2rem;">⚡</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # 研究团队信息
-    with st.container():
-        st.markdown("### 🧪 Research Team")
-        team_info = st.text_input("**Affiliation**", placeholder="Institution, Department",
-                                  label_visibility="collapsed")
-        corresponding_author = st.text_input("**Corresponding Author**", placeholder="Name, Email",
-                                             label_visibility="collapsed")
-
-    st.markdown("---")
-
-    # 动态指标
-    st.markdown("### 📊 Live Metrics")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric("Response Rate", "87%", "+12%", delta_color="normal")
-    with col2:
-        st.metric("Avg Completion", "23 min", "-5 min", delta_color="inverse")
-
-    # 实时活动指示器
-    st.markdown("---")
-    st.markdown("### 🔄 Activity")
-    st.markdown("""
-    <div style="background: rgba(210, 226, 239, 0.3); padding: 1rem; border-radius: 10px;">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-            <span>Active Assessments</span>
-            <span style="color: #255A3B; font-weight: bold;">12</span>
-        </div>
-        <div style="display: flex; justify-content: space-between;">
-            <span>Completed Today</span>
-            <span style="color: #81B095; font-weight: bold;">8</span>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown("---")
-    st.markdown("*Nature Cell Systems, 2025*")
-
-# 初始化session state
-if 'current_section' not in st.session_state:
-    st.session_state.current_section = 0
-
-# 修复进度条
-sections = ["Study Overview", "Methodology", "Results", "Discussion", "Conclusions"]
-progress_value = st.session_state.current_section / (len(sections) - 1)
-
-st.markdown(f"""
-<div style="background: linear-gradient(135deg, #ffffff, #DDEADF); padding: 2rem; border-radius: 16px; margin-bottom: 2rem; border: 2px solid #81B095; position: relative;">
-    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center;">
-        <span style="color: #255A3B; font-weight: 600; font-size: 1.1rem;">Research Protocol Progress</span>
-        <span style="background: #255A3B; color: white; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.9rem;">
-            Section {st.session_state.current_section + 1} of {len(sections)}
-        </span>
-    </div>
-
-    <div style="background: #DDEADF; height: 12px; border-radius: 8px; overflow: hidden; position: relative;">
-        <div style="background: linear-gradient(90deg, #255A3B, #81B095, #A78BFA); width: {progress_value * 100}%; 
-                    height: 100%; transition: width 0.8s ease; border-radius: 8px;"></div>
-    </div>
-
-    <div style="display: flex; justify-content: space-between; margin-top: 1rem; font-size: 0.9rem; color: #666;">
-        {' '.join([f'<span style="color: {"#255A3B" if i <= st.session_state.current_section else "#999"}; font-weight: {"600" if i == st.session_state.current_section else "400"};">{section}</span>'
-                   for i, section in enumerate(sections)])}
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-# Section 1: 研究概述 - 修复并增强
-if st.session_state.current_section >= 0:
-    st.markdown("""
-    <div class="section-nature">
-        <h2 style="color: #255A3B; margin-bottom: 1rem;">📖 Study Overview & Hypothesis</h2>
-        <p style="color: #666; font-size: 1.1rem; line-height: 1.6;">Evaluating AIVC-guided engineering of bacterial systems for targeted cancer therapy through computational-experimental integration.</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    col1, col2 = st.columns([2, 1])
-
-    with col1:
-        with st.form("study_overview"):
-            st.markdown("### 🎯 Research Context")
-
-            research_gap = st.selectbox(
-                "**Primary Research Gap Addressed**",
-                ["Limited targeted delivery in HCC therapy",
-                 "Inefficient ATRA bioavailability",
-                 "Poor tumor microenvironment targeting",
-                 "Lack of predictive in silico models",
-                 "Engineering biology safety concerns",
-                 "Other"],
-                help="Select the most relevant research gap"
-            )
-
-            hypothesis = st.text_area(
-                "**Central Research Hypothesis**",
-                placeholder="Example: Engineered bacteria with lactate-chemotaxis will selectively deliver ATRA to HCC tumors, improving therapeutic efficacy while reducing systemic toxicity...",
-                height=120
-            )
-
-            st.markdown("### 💡 Expected Contributions")
-            contributions = st.multiselect(
-                "**Anticipated Scientific Contributions**",
-                ["Novel AIVC methodology", "Improved therapeutic targeting",
-                 "Engineering biology platform", "Clinical translation framework",
-                 "Computational-experimental integration", "Regulatory science advancement",
-                 "Open-source tools", "Educational resources"],
-                default=["Novel AIVC methodology", "Improved therapeutic targeting"]
-            )
-
-            if st.form_submit_button("**Continue to Methodology →**", use_container_width=True):
-                st.session_state.current_section = 1
-                st.rerun()
-
-    with col2:
-        st.markdown("### 🎯 Research Impact Matrix")
-
-        # 修复的雷达图 - 使用正确的颜色格式
-        impact_fig = go.Figure()
-
-        impact_categories = ['Scientific', 'Clinical', 'Technical', 'Commercial', 'Educational']
-        current_scores = [8, 6, 9, 4, 7]
-
-        impact_fig.add_trace(go.Scatterpolar(
-            r=current_scores,
-            theta=impact_categories,
-            fill='toself',
-            name='Current Impact',
-            line=dict(color='#255A3B', width=3),
-            fillcolor='rgba(37, 90, 59, 0.3)'  # 修复：使用rgba格式
-        ))
-
-        impact_fig.update_layout(
-            polar=dict(
-                radialaxis=dict(
-                    visible=True,
-                    range=[0, 10],
-                    gridcolor='#D2E2EF',
-                    linecolor='#81B095'
-                ),
-                bgcolor='rgba(255,255,255,0.8)'
-            ),
-            showlegend=False,
-            height=400,
-            margin=dict(l=50, r=50, t=50, b=50),
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)'
-        )
-
-        st.plotly_chart(impact_fig, use_container_width=True)
-
-# Section 2: 方法论 - 修复并增强交互性
-if st.session_state.current_section >= 1:
-    st.markdown("""
-    <div class="technical-card">
-        <h2 style="color: #255A3B; margin-bottom: 1rem;">🛠️ Methodology & Technical Framework</h2>
-        <p style="color: #666;">AIVC simulation pipeline and engineering biology workflow with interactive parameter tuning</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # 使用标签页
-    tab1, tab2, tab3 = st.tabs(["🧠 AIVC Platform", "🧬 Engineering Design", "🔬 Experimental Validation"])
-
-    with tab1:
-        col1, col2 = st.columns([3, 2])
-
-        with col1:
-            st.markdown("### AIVC Simulation Parameters")
-
-            with st.form("aivc_methodology"):
-                st.markdown("**Virtual Cell Configuration**")
-
-                col1a, col1b = st.columns(2)
-                with col1a:
-                    cell_parameters = st.slider(
-                        "**Cell Population Size (log10)**", 3, 8, 5,
-                        help="Simulated bacterial population scale"
-                    )
-
-                    time_resolution = st.selectbox(
-                        "**Temporal Resolution**",
-                        ["1 ms", "10 ms", "100 ms", "1 s", "10 s"],
-                        index=3
-                    )
-
-                with col1b:
-                    spatial_dimensions = st.multiselect(
-                        "**Spatial Dimensions Modeled**",
-                        ["2D monolayer", "3D spheroid", "Vascular network",
-                         "Tissue gradient", "Whole organism"],
-                        default=["3D spheroid", "Tissue gradient"]
-                    )
-
-                st.markdown("**Molecular Dynamics**")
-                binding_affinity = st.slider(
-                    "**Lactate Binding Affinity (Kd)**", 0.1, 10.0, 2.5, 0.1,
-                    help="Simulated receptor-ligand interaction strength"
-                )
-
-                if st.form_submit_button("🔄 Update Simulation Parameters"):
-                    st.success("Parameters updated for AIVC simulation!")
-
-        with col2:
-            st.markdown("### ⚡ Simulation Performance")
-
-            # 性能指标仪表盘
-            performance_data = {
-                'Metric': ['Computational Speed', 'Memory Efficiency', 'Accuracy', 'Scalability'],
-                'Score': [85, 72, 88, 65],
-                'Color': ['#255A3B', '#81B095', '#A78BFA', '#F59E0B']
-            }
-
-            perf_fig = px.bar(performance_data, x='Score', y='Metric',
-                              orientation='h',
-                              color='Metric',
-                              color_discrete_map={
-                                  'Computational Speed': '#255A3B',
-                                  'Memory Efficiency': '#81B095',
-                                  'Accuracy': '#A78BFA',
-                                  'Scalability': '#F59E0B'
-                              })
-
-            perf_fig.update_layout(
-                height=300,
-                showlegend=False,
-                xaxis_title="Performance Score",
-                yaxis_title="",
-                plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='rgba(0,0,0,0)'
-            )
-
-            st.plotly_chart(perf_fig, use_container_width=True)
-
-    with tab2:
-        st.markdown("### 🧬 Genetic Circuit Design Analysis")
-
-        # 修复的散点图
-        circuit_data = {
-            'Component': ['Promoter', 'RBS', 'Coding', 'Terminator', 'Regulatory'],
-            'Complexity': [3, 2, 7, 1, 5],
-            'Stability': [8, 9, 6, 9, 7],
-            'Size': [200, 50, 1500, 100, 800]
-        }
-
-        circuit_fig = px.scatter(
-            circuit_data,
-            x='Complexity',
-            y='Stability',
-            size='Size',
-            text='Component',
-            color='Component',
-            color_discrete_sequence=['#255A3B', '#81B095', '#A78BFA', '#F59E0B', '#DB2777']
-        )
-
-        circuit_fig.update_traces(
-            textposition="top center",
-            marker=dict(sizemode='diameter', sizeref=2. * max(circuit_data['Size']) / (40. ** 2), sizemin=4),
-            textfont=dict(size=14, color="white", family="Arial Black")
-        )
-
-        circuit_fig.update_layout(
-            title="Genetic Component Analysis",
-            xaxis_title="Design Complexity",
-            yaxis_title="Predicted Stability",
-            height=450,
-            showlegend=False
-        )
-
-        st.plotly_chart(circuit_fig, use_container_width=True)
-
-    with tab3:
-        st.markdown("### 🔬 Validation Strategy")
-
-        validation_methods = st.multiselect(
-            "**Primary Validation Approaches**",
-            ["Fluorescence microscopy", "qPCR analysis", "Mass spectrometry",
-             "Animal models", "Cell culture", "Flow cytometry", "HPLC", "RNA-seq"],
-            default=["Fluorescence microscopy", "Animal models", "Mass spectrometry"]
-        )
-
-        st.markdown("**Statistical Power Analysis**")
-        col1, col2, col3 = st.columns(3)
-
-        with col1:
-            sample_size = st.number_input("**Sample Size (n)**", min_value=3, value=6,
-                                          help="Number of biological replicates")
-        with col2:
-            alpha_level = st.selectbox("**α-level**", [0.05, 0.01, 0.001], index=0)
-        with col3:
-            power = st.slider("**Power (1-β)**", 0.7, 0.99, 0.8, 0.01)
-
-        # 动态功率计算显示
-        st.info(
-            f"**Statistical Power**: With n={sample_size}, α={alpha_level}, you have {power * 100:.0f}% power to detect effects")
-
-    # 继续按钮
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        if st.button("**Proceed to Results →**", key="methodology_continue", use_container_width=True):
-            st.session_state.current_section = 2
-            st.rerun()
-
-# Section 3: 结果 - 修复可视化并增强交互性
-if st.session_state.current_section >= 2:
-    st.markdown("""
-    <div class="section-nature">
-        <h2 style="color: #255A3B; margin-bottom: 1rem;">📈 Results & Data Analysis</h2>
-        <p style="color: #666;">Computational predictions and experimental validation outcomes with interactive exploration</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    results_tab1, results_tab2, results_tab3 = st.tabs(
-        ["🧠 AIVC Predictions", "🔬 Experimental Data", "📊 Comparative Analysis"])
-
-    with results_tab1:
-        st.markdown("### AIVC Simulation Outcomes")
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-            # 时间序列预测 - 修复的颜色
-            time_points = np.linspace(0, 72, 100)
-            bacterial_growth = 1 / (1 + np.exp(-0.1 * (time_points - 24)))
-            atra_concentration = 0.8 * (1 - np.exp(-0.05 * time_points))
-
-            growth_fig = go.Figure()
-            growth_fig.add_trace(go.Scatter(
-                x=time_points, y=bacterial_growth,
-                name='Bacterial Population',
-                line=dict(color='#255A3B', width=3),
-                fill='tozeroy',
-                fillcolor='rgba(37, 90, 59, 0.1)'
-            ))
-            growth_fig.add_trace(go.Scatter(
-                x=time_points, y=atra_concentration,
-                name='ATRA Concentration',
-                line=dict(color='#DC917B', width=3, dash='dot'),
-                fill='tozeroy',
-                fillcolor='rgba(220, 145, 123, 0.1)'
-            ))
-
-            growth_fig.update_layout(
-                title="Population Dynamics & Metabolite Production",
-                xaxis_title="Time (hours)",
-                yaxis_title="Normalized Units",
-                height=400,
-                plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='rgba(0,0,0,0)'
-            )
-
-            st.plotly_chart(growth_fig, use_container_width=True)
-
-        with col2:
-            # 空间分布热图 - 修复的颜色
-            x = np.linspace(0, 10, 50)
-            y = np.linspace(0, 10, 50)
-            X, Y = np.meshgrid(x, y)
-
-            tumor_center = [7, 3]
-            Z = np.exp(-((X - tumor_center[0]) ** 2 + (Y - tumor_center[1]) ** 2) / 2)
-
-            heatmap_fig = go.Figure(data=go.Heatmap(
-                z=Z,
-                colorscale=[[0, '#D2E2EF'], [0.5, '#81B095'], [1, '#255A3B']],
-                showscale=True,
-                hoverinfo='z'
-            ))
-
-            heatmap_fig.update_layout(
-                title="Spatial Distribution in Tumor Microenvironment",
-                height=400,
-                xaxis_title="X Position",
-                yaxis_title="Y Position"
-            )
-
-            st.plotly_chart(heatmap_fig, use_container_width=True)
-
-    with results_tab2:
-        st.markdown("### 🔬 Experimental Validation Data")
-
-        # 创建模拟实验数据
-        experimental_conditions = ['Control', 'Low ATRA', 'Medium ATRA', 'High ATRA']
-        cell_viability = [100, 85, 62, 38]
-        apoptosis_rate = [5, 15, 42, 67]
-
-        exp_fig = go.Figure()
-
-        exp_fig.add_trace(go.Bar(
-            name='Cell Viability (%)',
-            x=experimental_conditions,
-            y=cell_viability,
-            marker_color='#81B095',
-            text=cell_viability,
-            textposition='auto',
-        ))
-
-        exp_fig.add_trace(go.Bar(
-            name='Apoptosis Rate (%)',
-            x=experimental_conditions,
-            y=apoptosis_rate,
-            marker_color='#DC917B',
-            text=apoptosis_rate,
-            textposition='auto',
-        ))
-
-        exp_fig.update_layout(
-            title="Therapeutic Efficacy Across Conditions",
-            barmode='group',
-            height=450,
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)'
-        )
-
-        st.plotly_chart(exp_fig, use_container_width=True)
-
-    with results_tab3:
-        st.markdown("### 📊 Comparative Performance Analysis")
-
-        # 修复的雷达图 - 使用正确的颜色格式
-        methods = ['AIVC-Optimized', 'Conventional', 'Random Mutagenesis']
-        metrics = ['Targeting Accuracy', 'Production Yield', 'Safety Profile', 'Scalability', 'Development Time']
-
-        data = np.array([
-            [8, 7, 8, 6, 7],
-            [5, 6, 7, 8, 5],
-            [3, 4, 5, 5, 8]
-        ])
-
-        radar_fig = go.Figure()
-
-        colors = ['#255A3B', '#81B095', '#A78BFA']  # 修复：使用有效的颜色
-
-        for i, method in enumerate(methods):
-            radar_fig.add_trace(go.Scatterpolar(
-                r=data[i],
-                theta=metrics,
-                fill='toself',
-                name=method,
-                line=dict(color=colors[i], width=2),
-                fillcolor=f'rgba({int(colors[i][1:3], 16)}, {int(colors[i][3:5], 16)}, {int(colors[i][5:7], 16)}, 0.3)'
-                # 修复：正确转换颜色
-            ))
-
-        radar_fig.update_layout(
-            polar=dict(
-                radialaxis=dict(visible=True, range=[0, 10], gridcolor='#D2E2EF'),
-                bgcolor='rgba(255,255,255,0.8)'
-            ),
-            showlegend=True,
-            height=500,
-            margin=dict(l=80, r=80, t=80, b=80)
-        )
-
-        st.plotly_chart(radar_fig, use_container_width=True)
-
-    # 继续按钮
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        if st.button("**Continue to Discussion →**", key="results_continue", use_container_width=True):
-            st.session_state.current_section = 3
-            st.rerun()
-
-# 交互式卡片
-st.markdown("""
-<div class="interactive-card">
-    <h3 style="color: #255A3B; text-align: center; margin-bottom: 1.5rem;">🎮 Interactive Exploration</h3>
-    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; text-align: center;">
-        <div style="padding: 1rem; background: rgba(37, 90, 59, 0.1); border-radius: 10px;">
-            <div style="font-size: 2rem;">📊</div>
-            <div style="font-weight: 600; color: #255A3B;">Data Explorer</div>
-            <div style="font-size: 0.9rem; color: #666;">Interactive charts</div>
-        </div>
-        <div style="padding: 1rem; background: rgba(129, 176, 149, 0.1); border-radius: 10px;">
-            <div style="font-size: 2rem;">🔍</div>
-            <div style="font-weight: 600; color: #255A3B;">Parameter Tuner</div>
-            <div style="font-size: 0.9rem; color: #666;">Real-time simulation</div>
-        </div>
-        <div style="padding: 1rem; background: rgba(167, 139, 250, 0.1); border-radius: 10px;">
-            <div style="font-size: 2rem;">📈</div>
-            <div style="font-weight: 600; color: #255A3B;">Analysis Tools</div>
-            <div style="font-size: 0.9rem; color: #666;">Statistical insights</div>
-        </div>
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-# 重置按钮
-st.markdown("---")
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    if st.button("**🔄 Start New Assessment**", use_container_width=True):
-        for key in list(st.session_state.keys()):
-            del st.session_state[key]
+# 语言切换器
+col1, col2, col3 = st.columns([3, 1, 1])
+with col3:
+    language = st.radio(
+        "🌐",
+        ["中文", "English"],
+        horizontal=True,
+        index=0 if st.session_state.language == "zh" else 1,
+        label_visibility="collapsed",
+        key="language_selector"
+    )
+    # 当语言切换时，更新session state
+    new_language = "zh" if language == "中文" else "en"
+    if new_language != st.session_state.language:
+        st.session_state.language = new_language
         st.rerun()
 
-# 科学引用和致谢 - 美化
-st.markdown("""
-<div style="background: linear-gradient(135deg, rgba(210, 226, 239, 0.5), rgba(221, 234, 223, 0.5)); 
-            padding: 2rem; border-radius: 16px; margin-top: 3rem; border: 1px solid rgba(37, 90, 59, 0.2);">
-    <h4 style="color: #255A3B; margin-bottom: 1.5rem; text-align: center;">📚 References & Acknowledgments</h4>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-        <div>
-            <h5 style="color: #255A3B; margin-bottom: 0.5rem;">Suggested Citation</h5>
-            <p style="font-size: 0.9rem; color: #666; line-height: 1.5; font-style: italic;">
-            Research Team. (2025). "AIVC-Engineered Bacterial Systems for Targeted Cancer Therapy". 
-            <em>Nature Cell Systems</em>.
-            </p>
-        </div>
-        <div>
-            <h5 style="color: #255A3B; margin-bottom: 0.5rem;">Acknowledgments</h5>
-            <p style="font-size: 0.9rem; color: #666; line-height: 1.5;">
-            Supported by computational resources from the Virtual Cell Consortium and synthetic biology facilities.
-            </p>
-        </div>
-    </div>
-    <div style="text-align: center; margin-top: 1.5rem;">
-        <span style="background: rgba(37, 90, 59, 0.1); padding: 0.5rem 1rem; border-radius: 20px; 
-                    font-size: 0.9rem; color: #255A3B;">🔬 Open Science • 🤝 Collaboration • 💡 Innovation</span>
-    </div>
+texts = TEXTS[st.session_state.language]
+
+# 修复后的包容性Header
+st.markdown(f"""
+<div class="inclusive-header">
+    <h1 style="font-size: 3rem; margin-bottom: 0.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">{texts['title']}</h1>
+    <h2 style="font-size: 1.5rem; font-weight: 300; margin-bottom: 1rem; opacity: 0.9;">{texts['subtitle']}</h2>
 </div>
 """, unsafe_allow_html=True)
+
+# 修复后的徽章容器
+st.markdown(f"""
+<div class="badge-container">
+    <div class="diversity-badge">🌍 {texts['global_participation']}</div>
+    <div class="diversity-badge">♿ {texts['accessibility_design']}</div>
+    <div class="diversity-badge">🌈 {texts['diversity_inclusion']}</div>
+    <div class="diversity-badge">🔒 {texts['data_protection']}</div>
+    <div class="diversity-badge">🎯 {texts['scientific_research']}</div>
+</div>
+""", unsafe_allow_html=True)
+
+# 数据使用承诺横幅
+st.markdown(f"""
+<div class="promise-banner" style="text-align: center;">
+    <h3 style="margin: 0 0 1rem 0; display: inline-flex; align-items: center; gap: 0.5rem; justify-content: center;">
+        <span>🤝</span> {texts['data_promise_title']}
+    </h3>
+    <p style="margin: 0; font-size: 1rem; line-height: 1.6;">{texts['data_promise']}</p>
+</div>
+""", unsafe_allow_html=True)
+
+# 主内容区域
+tab1, tab2, tab3 = st.tabs(["📝 " + texts['basic_info'], "📊 " + texts['dashboard'], "🔍 Research Transparency"])
+
+with tab1:
+    # 进度指示器
+    steps = [texts['basic_info'], texts['medical_history'], texts['symptoms'],
+             texts['treatment'], texts['research'], texts['completion']]
+
+    progress_percent = (st.session_state.current_step / (len(steps) - 1)) * 100 if len(steps) > 1 else 0
+
+    # 使用st.components.html来渲染HTML内容
+    progress_html = f"""
+    <div style="margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <span style="color: #1f77b4; font-weight: 600; font-size: 1.1rem;">{texts['progress']}</span>
+            <span style="background: #1f77b4; color: white; padding: 0.3rem 1rem; border-radius: 20px; font-size: 0.9rem;">
+                {st.session_state.current_step + 1} / {len(steps)}
+            </span>
+        </div>
+
+        <div style="background: #e9ecef; height: 12px; border-radius: 8px; overflow: hidden; position: relative;">
+            <div style="background: linear-gradient(90deg, #1f77b4, #2ca02c, #ff7f0e); 
+                        width: {progress_percent}%; 
+                        height: 100%; transition: width 0.8s ease; border-radius: 8px;"></div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; margin-top: 1rem; font-size: 0.9rem;">
+            {''.join([f'<span style="color: {"#1f77b4" if i <= st.session_state.current_step else "#999"}; font-weight: {"600" if i == st.session_state.current_step else "400"}; text-align: center; flex: 1;">{step}</span>' for i, step in enumerate(steps)])}
+        </div>
+    </div>
+    """
+    # 确保HTML正确渲染而不是显示为纯文本
+    st.components.v1.html(progress_html, height=150)
+
+    # 步骤1: 知情同意
+    if st.session_state.current_step == 0:
+        st.markdown(f"""
+        <div class="inclusive-card">
+            <h2 style="color: #1f77b4; margin-bottom: 1.5rem;">🤝 {texts['consent']}</h2>
+            <p style="color: #666; margin-bottom: 2rem;">{texts['inclusive_research']}</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        with st.form("informed_consent"):
+            st.markdown("<h3 style='text-align:center'>📋 Research Participation Agreement</h3>", unsafe_allow_html=True)
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.markdown("""
+                <div style='text-align:center'>
+                <h4>Research Purpose</h4>
+                <ul>
+                    <li>Advance scientific research in liver cancer treatment</li>
+                    <li>Provide real-world data for iGEM competition</li>
+                    <li>Promote global innovation in healthcare</li>
+                </ul>
+
+                <h4>Your Rights</h4>
+                <ul>
+                    <li>Right to withdraw from the study at any time</li>
+                    <li>Right to access your personal data</li>
+                    <li>Right to ask questions and raise concerns</li>
+                </ul>
+                </div>
+                """, unsafe_allow_html=True)
+
+            with col2:
+                st.markdown("""
+                <div style='text-align:center'>
+                <h4>Data Protection</h4>
+                <ul>
+                    <li>All data will be anonymized</li>
+                    <li>Data used only for scientific research</li>
+                    <li>Strict data security measures</li>
+                </ul>
+
+                <h4>Benefits & Risks</h4>
+                <ul>
+                    <li>Contribute to medical advancement</li>
+                    <li>May not receive direct medical benefits</li>
+                    <li>Privacy risks minimized</li>
+                </ul>
+                </div>
+                """, unsafe_allow_html=True)
+
+            # 包容性承诺
+            st.markdown("---")
+            st.markdown("<h3 style='text-align:center'>🌈 Our Inclusive Commitment</h3>", unsafe_allow_html=True)
+            st.markdown(texts['diversity_statement'])
+
+            # 同意选项
+            st.markdown("---")
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                c1, c2, c3 = st.columns([1, 2, 1])
+                with c2:
+                    consent_1 = st.checkbox("**I understand the research purpose and process**", value=False)
+                c1, c2, c3 = st.columns([1, 2, 1])
+                with c2:
+                    consent_2 = st.checkbox("**I agree to participate in this research**", value=False)
+                c1, c2, c3 = st.columns([1, 2, 1])
+                with c2:
+                    consent_3 = st.checkbox("**I understand the data usage promise**", value=False)
+                c1, c2, c3 = st.columns([1, 2, 1])
+                with c2:
+                    consent_4 = st.checkbox("**I confirm I am 18 years or older**", value=False)
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
+            with col3:
+                if st.form_submit_button(f"**{texts['start_questionnaire']}**"):
+                    if all([consent_1, consent_2, consent_3, consent_4]):
+                        st.session_state.consent_given = True
+                        st.session_state.current_step = 1
+                        st.rerun()
+                    else:
+                        st.error(texts['consent_required'])
+            
+
+    # 步骤2: 扩展的基本信息
+    elif st.session_state.current_step == 1:
+        st.markdown(f"""
+        <div class="inclusive-card">
+            <h2 style="color: #1f77b4; margin-bottom: 1.5rem;">👥 {texts['demographics']}</h2>
+            <p style="color: #666; margin-bottom: 2rem;">We value everyone's unique experiences and backgrounds</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        with st.form("extended_demographics"):
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.subheader("📋 Basic Identity Information")
+                questionnaire_id = st.text_input(f"{texts['questionnaire_id']} *", placeholder="A001")
+                survey_date = st.date_input(f"{texts['survey_date']} *", datetime.now())
+                survey_method = st.selectbox(f"{texts['survey_method']} *", texts['survey_methods'])
+
+                # 扩展的人口统计信息
+                st.subheader("👤 Identity Characteristics")
+                gender = st.selectbox(f"{texts['gender']} *", texts['genders'])
+                birth_date = st.date_input(f"{texts['birth_date']} *", datetime(1980, 1, 1))
+
+                # 计算年龄
+                age = datetime.now().year - birth_date.year
+                st.info(f"**Age**: {age} years")
+
+            with col2:
+                st.subheader("🏠 Socioeconomic Background")
+                education_level = st.selectbox(texts['education_level'], texts['education_levels'])
+                occupation = st.selectbox(texts['occupation'], texts['occupations'])
+                income_level = st.selectbox(texts['income_level'], texts['income_levels'])
+
+                st.subheader("🌍 Cultural Background")
+                ethnicity = st.selectbox(texts['ethnicity'], texts['ethnicities'])
+                residence_type = st.selectbox(texts['residence_type'], texts['residence_types'])
+                region = st.selectbox(f"{texts['region']} *", texts['regions'])
+
+            # 无障碍需求部分
+            st.markdown("---")
+            st.markdown(f"### ♿ {texts['accessibility']}")
+            col3, col4 = st.columns(2)
+
+            with col3:
+                accessibility_needs = st.multiselect(
+                    texts['accessibility_needs'],
+                    texts['accessibility_options']
+                )
+
+            with col4:
+                preferred_communication = st.multiselect(
+                    texts['communication_preference'],
+                    texts['communication_options']
+                )
+
+            col1, col2, col3 = st.columns([1, 1, 1])
+            with col2:
+                if st.form_submit_button(f"**{texts['next']}**"):
+                    if questionnaire_id:
+                        st.session_state.form_data.update({
+                            'questionnaire_id': questionnaire_id,
+                            'demographics': {
+                                'gender': gender,
+                                'birth_date': str(birth_date),
+                                'education': education_level,
+                                'occupation': occupation,
+                                'income': income_level,
+                                'ethnicity': ethnicity,
+                                'residence': residence_type,
+                                'region': region,
+                                'accessibility_needs': accessibility_needs,
+                                'communication_preference': preferred_communication
+                            }
+                        })
+                        st.session_state.current_step = 2
+                        st.rerun()
+                    else:
+                        st.error("Please enter a Questionnaire ID")
+
+    # 步骤3: 扩展的医疗信息
+    elif st.session_state.current_step == 2:
+        st.markdown(f"""
+        <div class="inclusive-card">
+            <h2 style="color: #1f77b4; margin-bottom: 1.5rem;">🏥 {texts['medical_history']}</h2>
+            <p style="color: #666; margin-bottom: 2rem;">Comprehensive health status assessment</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        with st.form("extended_medical_history"):
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.subheader("🩺 Liver Cancer Diagnosis Information")
+                diagnosis_date = st.date_input(f"{texts['diagnosis_date']} *", datetime.now())
+                tumor_stage = st.selectbox(f"{texts['tumor_stage']} *", texts['tumor_stages'])
+                diagnosis_location = st.selectbox(texts['diagnosis_location'], texts['hospital_types'])
+
+                st.subheader("🦠 Hepatitis and Liver Health")
+                has_hepatitis_b = st.radio(f"{texts['hepatitis_b']} *", texts['yes_no_unknown'])
+                if has_hepatitis_b == texts['yes_no_unknown'][0]:  # "Yes"
+                    hbv_treatment = st.radio("HBV Antiviral Treatment", texts['yes_no_unknown'])
+                    hbv_duration = st.number_input("Years of HBV History", min_value=0, max_value=50, value=5)
+
+                has_hepatitis_c = st.radio(f"{texts['hepatitis_c']} *", texts['yes_no_unknown'])
+                other_liver_disease = st.multiselect(texts['other_liver_disease'], texts['liver_diseases'])
+
+            with col2:
+                st.subheader("💊 Treatment Experience")
+                treatment_experience = st.multiselect(
+                    f"{texts['treatment_experience']} *",
+                    texts['treatments']
+                )
+
+                st.subheader("🔬 Current Treatment Status")
+                current_treatment = st.radio(f"{texts['current_treatment']} *", texts['yes_no_unknown'])
+                if current_treatment == texts['yes_no_unknown'][0]:  # "Yes"
+                    treatment_types = st.multiselect("Current Treatment Methods",
+                                                     ["Targeted Drugs", "Immunotherapy", "Chemotherapy", "Radiation",
+                                                      "Interventional", "Other"])
+                    treatment_duration = st.number_input("Current Treatment Duration (months)", min_value=1,
+                                                         max_value=120, value=6)
+                    monthly_cost = st.selectbox("Monthly Treatment Cost",
+                                                ["Under 10k", "10k-30k", "30k-50k", "50k-100k", "Over 100k",
+                                                 "Insurance Covered"])
+
+            col1, col2, col3 = st.columns([1, 1, 1])
+            with col2:
+                if st.form_submit_button(f"**{texts['next']}**"):
+                    st.session_state.current_step = 3
+                    st.rerun()
+
+    # 步骤4: 症状评估（简化版）
+    elif st.session_state.current_step == 3:
+        st.markdown(f"""
+        <div class="inclusive-card">
+            <h2 style="color: #1f77b4; margin-bottom: 1.5rem;">📊 {texts['symptoms']}</h2>
+            <p style="color: #666; margin-bottom: 2rem;">Please rate your symptoms over the past week</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        with st.form("symptoms_assessment"):
+            st.subheader("🩺 Symptom Severity (1-10 scale)")
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                fatigue = st.slider("Fatigue", 1, 10, 5)
+                pain = st.slider("Pain", 1, 10, 3)
+                nausea = st.slider("Nausea", 1, 10, 2)
+
+            with col2:
+                appetite = st.slider("Appetite Loss", 1, 10, 4)
+                sleep = st.slider("Sleep Disturbance", 1, 10, 3)
+                mobility = st.slider("Mobility Issues", 1, 10, 2)
+
+            st.subheader("📝 Additional Symptoms")
+            additional_symptoms = st.multiselect(
+                "Select any additional symptoms you've experienced:",
+                ["Weight Loss", "Fever", "Jaundice", "Abdominal Swelling", "Shortness of Breath", "Other"]
+            )
+
+            other_symptoms = st.text_area("Please describe any other symptoms:")
+
+            col1, col2, col3 = st.columns([1, 1, 1])
+            with col2:
+                if st.form_submit_button(f"**{texts['next']}**"):
+                    st.session_state.form_data['symptoms'] = {
+                        'fatigue': fatigue,
+                        'pain': pain,
+                        'nausea': nausea,
+                        'appetite': appetite,
+                        'sleep': sleep,
+                        'mobility': mobility,
+                        'additional_symptoms': additional_symptoms,
+                        'other_symptoms': other_symptoms
+                    }
+                    st.session_state.current_step = 4
+                    st.rerun()
+
+    # 步骤5: 研究参与
+    elif st.session_state.current_step == 4:
+        st.markdown(f"""
+        <div class="inclusive-card">
+            <h2 style="color: #1f77b4; margin-bottom: 1.5rem;">🔬 {texts['research']}</h2>
+            <p style="color: #666; margin-bottom: 2rem;">Your contribution to scientific advancement</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        with st.form("research_participation"):
+            st.subheader("📋 Future Research Opportunities")
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                future_contact = st.radio(
+                    "Would you be willing to be contacted for future research studies?",
+                    ["Yes", "No", "Maybe"]
+                )
+
+                sample_collection = st.radio(
+                    "Would you consider providing biological samples (e.g., blood, tissue) for research?",
+                    ["Yes", "No", "Need more information"]
+                )
+
+            with col2:
+                data_sharing = st.radio(
+                    "Would you allow your anonymized data to be shared with other researchers?",
+                    ["Yes, fully anonymized", "Yes, with restrictions", "No"]
+                )
+
+                follow_up = st.radio(
+                    "Would you participate in follow-up surveys?",
+                    ["Yes", "No", "Depends on timing"]
+                )
+
+            suggestions = st.text_area("Any suggestions for improving our research or this platform:")
+
+            col1, col2, col3 = st.columns([1, 1, 1])
+            with col2:
+                if st.form_submit_button(f"**{texts['next']}**"):
+                    st.session_state.form_data['research'] = {
+                        'future_contact': future_contact,
+                        'sample_collection': sample_collection,
+                        'data_sharing': data_sharing,
+                        'follow_up': follow_up,
+                        'suggestions': suggestions
+                    }
+                    st.session_state.current_step = 5
+                    st.rerun()
+
+    # 步骤6: 完成
+    elif st.session_state.current_step == 5:
+        st.markdown(f"""
+        <div class="inclusive-card">
+            <h2 style="color: #1f77b4; margin-bottom: 1.5rem;">🎉 {texts['completion']}</h2>
+            <p style="color: #666; margin-bottom: 2rem;">Thank you for your valuable contribution to research</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.success("### ✅ " + texts['thank_you'])
+
+        # 显示提交的数据摘要
+        st.subheader("📋 Your Submitted Information")
+
+        if 'demographics' in st.session_state.form_data:
+            with st.expander("Demographic Information"):
+                st.json(st.session_state.form_data['demographics'])
+
+        if 'symptoms' in st.session_state.form_data:
+            with st.expander("Symptoms Assessment"):
+                st.json(st.session_state.form_data['symptoms'])
+
+        if 'research' in st.session_state.form_data:
+            with st.expander("Research Preferences"):
+                st.json(st.session_state.form_data['research'])
+
+        # 提交按钮
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button(f"**{texts['submit']}**", type="primary", use_container_width=True):
+                # 在实际应用中，这里会将数据保存到数据库
+                st.balloons()
+                st.success("### 🎉 Your response has been recorded!")
+                st.info("Your data will contribute to important research in liver cancer treatment.")
+
+                # 重置表单
+                time.sleep(2)
+                st.session_state.current_step = 0
+                st.session_state.form_data = {}
+                st.rerun()
+
+    # 导航按钮（除了第一步和最后一步）
+    if st.session_state.current_step > 0 and st.session_state.current_step < 5:
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col1:
+            if st.button(f"**{texts['previous']}**", use_container_width=True):
+                st.session_state.current_step -= 1
+                st.rerun()
+
+with tab2:
+    # 实时仪表盘
+    st.markdown(f"""
+    <div class="inclusive-card">
+        <h2 style="color: #1f77b4; margin-bottom: 1.5rem;">📊 {texts['dashboard']}</h2>
+        <p style="color: #666; margin-bottom: 2rem;">Real-time data visualization and research metrics</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # 实时指标
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        st.metric("Total Participants", "156", "+12")
+    with col2:
+        st.metric("Completion Rate", "92%", "+3%")
+    with col3:
+        st.metric("Active Today", "23", "+5")
+    with col4:
+        st.metric("Ethnic Diversity", "8+", "ethnicities")
+
+    # 数据可视化
+    st.subheader("📈 Participation Analytics")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        # 地区分布图
+        region_counts = st.session_state.participants_data['region'].value_counts()
+        fig1 = px.pie(
+            values=region_counts.values,
+            names=region_counts.index,
+            title="Regional Distribution of Participants"
+        )
+        st.plotly_chart(fig1, use_container_width=True)
+
+    with col2:
+        # 肿瘤分期分布
+        stage_counts = st.session_state.participants_data['tumor_stage'].value_counts()
+        fig2 = px.bar(
+            x=stage_counts.index,
+            y=stage_counts.values,
+            title="Tumor Stage Distribution",
+            labels={'x': 'Tumor Stage', 'y': 'Count'}
+        )
+        st.plotly_chart(fig2, use_container_width=True)
+
+    # 时间趋势图
+    st.subheader("📅 Participation Over Time")
+    daily_counts = st.session_state.participants_data.groupby(
+        st.session_state.participants_data['completion_date'].dt.date
+    ).size().reset_index(name='count')
+
+    fig3 = px.line(
+        daily_counts,
+        x='completion_date',
+        y='count',
+        title="Daily Participation Trend"
+    )
+    st.plotly_chart(fig3, use_container_width=True)
+
+with tab3:
+    # 研究透明度
+    st.markdown(f"""
+    <div class="inclusive-card">
+        <h2 style="color: #1f77b4; margin-bottom: 1.5rem;">🔍 Research Transparency</h2>
+        <p style="color: #666; margin-bottom: 2rem;">Open and transparent research data management</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("📊 Data Usage Statistics")
+        st.metric("Data Points Collected", "15,642")
+        st.metric("Research Questions Answered", "42")
+        st.metric("Publications Supported", "3")
+
+    with col2:
+        st.subheader("🔒 Privacy & Ethics")
+        st.info("""
+        - All data is fully anonymized
+        - IRB approval: SYPHU-2025-IGEM-001
+        - Regular security audits conducted
+        - Compliance with GDPR and local regulations
+        """)
+
+    st.subheader("📋 Data Export Options")
+
+    export_format = st.selectbox("Select export format:", ["CSV", "JSON", "Excel"])
+
+    if st.button("Generate Export"):
+        with st.spinner("Preparing your data export..."):
+            time.sleep(2)
+            st.success("Export ready! This would download the data in production.")
+
+# 页脚
+st.markdown("---")
+footer_col1, footer_col2, footer_col3 = st.columns([1, 1, 1])
+
+with footer_col2:
+    st.markdown(f"""
+    <div style="width: 100%; display: flex; justify-content: center;">
+        <div style="max-width: 800px; text-align: center; color: #666; padding: 2rem;">
+            <h4 style="color: #1f77b4; margin-bottom: 1rem;">{texts['team']}</h4>
+            <p style="margin: 0 auto 1.5rem auto; max-width: 600px;"><strong>Inclusive Research Commitment:</strong> We are committed to enabling everyone to participate in scientific research, regardless of age, gender, ethnicity, ability, or background.</p>
+            <div style="display: inline-block;">
+                <div style="background: linear-gradient(135deg, #ff6b6b, #ee5a24); padding: 0.5rem 1rem; margin: 0.3rem; border-radius: 8px; display: inline-block;">🔬 Scientific Research</div>
+                <div style="background: linear-gradient(135deg, #4ecdc4, #00b894); padding: 0.5rem 1rem; margin: 0.3rem; border-radius: 8px; display: inline-block;">🤝 Ethical Compliance</div>
+                <div style="background: linear-gradient(135deg, #45b7d1, #0984e3); padding: 0.5rem 1rem; margin: 0.3rem; border-radius: 8px; display: inline-block;">🌍 Global Collaboration</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
